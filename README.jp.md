@@ -8,6 +8,7 @@
 
 Bind-9.10.3に対するパッチです。パッチは以下の手順で当てることができます。
 
+    $ wget https://raw.githubusercontent.com/sischkg/xfer-limit/master/bind-9.10.3-xfer-limit-0.0.1.patch
     $ wget http://ftp.isc.org/isc/bind9/9.10.3/bind-9.10.3.tar.gz
     $ tar xzf bind-9.10.3.tar.gz
     $ cd bind-9.10.3
@@ -31,6 +32,7 @@ named.confに`max-transfer-size-in`を設定することで、
 
 nsd-4.1.5に対するパッチです。パッチは以下の手順で当てることができます。
 
+    $ wget https://raw.githubusercontent.com/sischkg/xfer-limit/master/nsd-4.1.5-xfer-limit-0.0.1.patch
     $ wget http://www.nlnetlabs.nl/downloads/nsd/nsd-4.1.5.tar.gz
     $ tar xzf nsd-4.1.5.tar.gz
     $ cd nsd-4.1.5.tar.gz
