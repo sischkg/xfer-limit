@@ -1,0 +1,50 @@
+# Xfer-Limit Patches
+
+このパッチは、BindやNSDのゾーン転送(AXFR)に転送データの上限を設定する機能を追加します。
+
+## 使用方法
+
+### Bind
+
+Bind-9.10.3に対するパッチです。パッチは以下の手順で当てることができます。
+
+    $ wget http://ftp.isc.org/isc/bind9/9.10.3/bind-9.10.3.tar.gz
+    $ tar xzf bind-9.10.3.tar.gz
+    $ cd bind-9.10.3
+    $ patch -p1 < ../bind-9.10.3-xfer-limit-0.0.1.patch
+    $ ./configure <configure options>
+    $ make
+    $ su
+    # make install
+
+named.confに`max-transfer-size-in`を設定することで、
+ゾーン転送の受信データの上限値(bytes)を設定することができます。
+
+    zone "example.com" {
+        type slave;
+        masters { 192.168.198.132; };
+        file "example.com.db";
+        max-transfer-size-in 2000000;
+    };
+
+### NSD
+
+nsd-4.1.5に対するパッチです。パッチは以下の手順で当てることができます。
+
+    $ wget http://www.nlnetlabs.nl/downloads/nsd/nsd-4.1.5.tar.gz
+    $ tar xzf nsd-4.1.5.tar.gz
+    $ cd nsd-4.1.5.tar.gz
+    $ patch -p1 < ../nsd-4.1.5-xfer-limit-0.0.1.patch
+    $ ./configure <configure options>
+    $ make
+    $ su
+    # make install
+
+nsd.confに`size-limit-xfr`を設定することで、
+ゾーン転送の受信データを保存する一時ファイルの上限値(bytes)を設定することができます。
+
+    name: "example.com"
+        zonefile: "example.com"
+        request-xfr: 192.168.198.132 NOKEY
+        size-limit-xfr: 2000000
+

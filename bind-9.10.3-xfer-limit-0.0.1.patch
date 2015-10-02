@@ -1,0 +1,421 @@
+diff -Naur bind-9.10.3/.gitignore bind-9.10.3-xfer-limit-p0.0.1/.gitignore
+--- bind-9.10.3/.gitignore	1970-01-01 00:00:00.000000000 +0000
++++ bind-9.10.3-xfer-limit-p0.0.1/.gitignore	2015-09-30 15:34:52.000000000 +0000
+@@ -0,0 +1,243 @@
++*~
++*.o
++*.a
++
++
++Makefile
++bin/Makefile
++bin/check/Makefile
++bin/check/named-checkconf
++bin/check/named-checkzone
++bin/confgen/Makefile
++bin/confgen/ddns-confgen
++bin/confgen/rndc-confgen
++bin/confgen/tsig-keygen
++bin/confgen/unix/Makefile
++bin/delv/Makefile
++bin/delv/delv
++bin/dig/Makefile
++bin/dig/dig
++bin/dig/host
++bin/dig/nslookup
++bin/dnssec/Makefile
++bin/dnssec/dnssec-dsfromkey
++bin/dnssec/dnssec-importkey
++bin/dnssec/dnssec-keyfromlabel
++bin/dnssec/dnssec-keygen
++bin/dnssec/dnssec-revoke
++bin/dnssec/dnssec-settime
++bin/dnssec/dnssec-signzone
++bin/dnssec/dnssec-verify
++bin/named/Makefile
++bin/named/lwresd
++bin/named/named
++bin/named/named-symtbl.c
++bin/named/unix/Makefile
++bin/nsupdate/Makefile
++bin/nsupdate/nsupdate
++bin/pkcs11/Makefile
++bin/python/Makefile
++bin/python/dnssec-checkds
++bin/python/dnssec-checkds.py
++bin/python/dnssec-coverage
++bin/python/dnssec-coverage.py
++bin/rndc/Makefile
++bin/rndc/rndc
++bin/tests/Makefile
++bin/tests/atomic/Makefile
++bin/tests/atomic/t_atomic
++bin/tests/cfg_test
++bin/tests/db/Makefile
++bin/tests/db/t_db
++bin/tests/dst/Kdh*.key
++bin/tests/dst/Kdh*.private
++bin/tests/dst/Kdh*.key
++bin/tests/dst/Kdh*.private
++bin/tests/dst/Ktest*.key
++bin/tests/dst/Ktest*.key
++bin/tests/dst/Ktest*.private
++bin/tests/dst/Ktest*.key
++bin/tests/dst/Ktest*.private
++bin/tests/dst/Ktest*.key
++bin/tests/dst/Makefile
++bin/tests/dst/dst_2_data
++bin/tests/dst/dst_test
++bin/tests/dst/gsstest
++bin/tests/dst/t2_data_1
++bin/tests/dst/t2_data_2
++bin/tests/dst/t2_dsasig
++bin/tests/dst/t2_rsasig
++bin/tests/dst/t_dst
++bin/tests/hashes/Makefile
++bin/tests/hashes/t_hashes
++bin/tests/headerdep_test.sh
++bin/tests/makejournal
++bin/tests/master/Makefile
++bin/tests/master/t_master
++bin/tests/mem/Makefile
++bin/tests/mem/t_mem
++bin/tests/names/Makefile
++bin/tests/names/t_names
++bin/tests/net/Makefile
++bin/tests/net/t_net
++bin/tests/pkcs11/Makefile
++bin/tests/pkcs11/benchmarks/Makefile
++bin/tests/rbt/Makefile
++bin/tests/rbt/t_rbt
++bin/tests/resolver/Makefile
++bin/tests/resolver/t_resolver
++bin/tests/sockaddr/Makefile
++bin/tests/sockaddr/t_sockaddr
++bin/tests/system/Makefile
++bin/tests/system/builtin/Makefile
++bin/tests/system/builtin/gethostname
++bin/tests/system/conf.sh
++bin/tests/system/dlz/prereq.sh
++bin/tests/system/dlzexternal/Makefile
++bin/tests/system/dlzexternal/dlopen
++bin/tests/system/dlzexternal/driver.so
++bin/tests/system/dlzexternal/ns1/named.conf
++bin/tests/system/dlzredir/prereq.sh
++bin/tests/system/fetchlimit/Makefile
++bin/tests/system/fetchlimit/fetchlimit
++bin/tests/system/filter-aaaa/Makefile
++bin/tests/system/filter-aaaa/filter-aaaa
++bin/tests/system/geoip/Makefile
++bin/tests/system/geoip/geoip
++bin/tests/system/inline/checkdsa.sh
++bin/tests/system/lwresd/Makefile
++bin/tests/system/lwresd/lwtest
++bin/tests/system/rpz/Makefile
++bin/tests/system/rpz/rpz
++bin/tests/system/rsabigexponent/Makefile
++bin/tests/system/rsabigexponent/bigkey
++bin/tests/system/sit/prereq.sh
++bin/tests/system/statistics/Makefile
++bin/tests/system/statistics/xmlstats
++bin/tests/system/tkey/Makefile
++bin/tests/system/tkey/keycreate
++bin/tests/system/tkey/keydelete
++bin/tests/system/tsiggss/Makefile
++bin/tests/system/tsiggss/gssapi_krb
++bin/tests/tasks/Makefile
++bin/tests/tasks/t_tasks
++bin/tests/timers/Makefile
++bin/tests/timers/t_timers
++bin/tests/virtual-time/Makefile
++bin/tests/virtual-time/conf.sh
++bin/tests/wire_test
++bin/tools/Makefile
++bin/tools/arpaname
++bin/tools/genrandom
++bin/tools/isc-hmac-fixup
++bin/tools/named-journalprint
++bin/tools/named-rrchecker
++bin/tools/nsec3hash
++config.h
++config.log
++config.status
++contrib/scripts/check-secure-delegation.pl
++contrib/scripts/zone-edit.sh
++doc/Makefile
++doc/arm/Makefile
++doc/doxygen/Doxyfile
++doc/doxygen/Makefile
++doc/doxygen/doxygen-input-filter
++doc/misc/Makefile
++doc/xsl/Makefile
++doc/xsl/isc-docbook-chunk.xsl
++doc/xsl/isc-docbook-html.xsl
++doc/xsl/isc-docbook-latex.xsl
++doc/xsl/isc-manpage.xsl
++doc/xsl/isc-notes-html.xsl
++doc/xsl/isc-notes-latex.xsl
++isc-config.sh
++lib/Makefile
++lib/bind9/Makefile
++lib/bind9/include/Makefile
++lib/bind9/include/bind9/Makefile
++lib/bind9/libbind9.a
++lib/bind9/timestamp
++lib/dns/Makefile
++lib/dns/code.h
++lib/dns/gen
++lib/dns/include/Makefile
++lib/dns/include/dns/Makefile
++lib/dns/include/dns/enumclass.h
++lib/dns/include/dns/enumtype.h
++lib/dns/include/dns/rdatastruct.h
++lib/dns/include/dst/Makefile
++lib/dns/libdns.a
++lib/dns/tests/Makefile
++lib/dns/timestamp
++lib/irs/Makefile
++lib/irs/include/Makefile
++lib/irs/include/irs/Makefile
++lib/irs/include/irs/netdb.h
++lib/irs/include/irs/platform.h
++lib/irs/libirs.a
++lib/irs/timestamp
++lib/isc/Makefile
++lib/isc/include/Makefile
++lib/isc/include/isc/Makefile
++lib/isc/include/isc/platform.h
++lib/isc/include/pk11/Makefile
++lib/isc/include/pkcs11/Makefile
++lib/isc/libisc-nosymtbl.a
++lib/isc/libisc.a
++lib/isc/nls/Makefile
++lib/isc/pthreads/Makefile
++lib/isc/pthreads/include/Makefile
++lib/isc/pthreads/include/isc/Makefile
++lib/isc/tests/Makefile
++lib/isc/timestamp
++lib/isc/unix/Makefile
++lib/isc/unix/include/Makefile
++lib/isc/unix/include/isc/Makefile
++lib/isc/unix/include/pkcs11/Makefile
++lib/isc/x86_32/Makefile
++lib/isc/x86_32/include/Makefile
++lib/isc/x86_32/include/isc/Makefile
++lib/isccc/Makefile
++lib/isccc/include/Makefile
++lib/isccc/include/isccc/Makefile
++lib/isccc/libisccc.a
++lib/isccc/timestamp
++lib/isccfg/Makefile
++lib/isccfg/include/Makefile
++lib/isccfg/include/isccfg/Makefile
++lib/isccfg/libisccfg.a
++lib/isccfg/timestamp
++lib/lwres/Makefile
++lib/lwres/include/Makefile
++lib/lwres/include/lwres/Makefile
++lib/lwres/include/lwres/netdb.h
++lib/lwres/include/lwres/platform.h
++lib/lwres/liblwres.a
++lib/lwres/man/Makefile
++lib/lwres/tests/Makefile
++lib/lwres/timestamp
++lib/lwres/unix/Makefile
++lib/lwres/unix/include/Makefile
++lib/lwres/unix/include/lwres/Makefile
++lib/samples/Makefile
++lib/samples/Makefile-postinstall
++lib/samples/nsprobe
++lib/samples/resolve
++lib/samples/sample-async
++lib/samples/sample-gai
++lib/samples/sample-request
++lib/samples/sample-update
++lib/tests/Makefile
++lib/tests/include/Makefile
++lib/tests/include/tests/Makefile
++lib/tests/libt_api.a
++lib/tests/timestamp
++libtool
++make/Makefile
++make/includes
++make/mkdep
++make/rules
++unit/Makefile
++unit/unittest.sh
++
+diff -Naur bind-9.10.3/bin/named/config.c bind-9.10.3-xfer-limit-p0.0.1/bin/named/config.c
+--- bind-9.10.3/bin/named/config.c	2015-09-09 02:23:40.000000000 +0000
++++ bind-9.10.3-xfer-limit-p0.0.1/bin/named/config.c	2015-09-30 15:34:52.000000000 +0000
+@@ -207,6 +207,7 @@
+ 	alt-transfer-source-v6 *;\n\
+ 	max-transfer-time-in 120;\n\
+ 	max-transfer-time-out 120;\n\
++	max-transfer-size-in 0;\n\
+ 	max-transfer-idle-in 60;\n\
+ 	max-transfer-idle-out 60;\n\
+ 	max-retry-time 1209600; /* 2 weeks */\n\
+diff -Naur bind-9.10.3/bin/named/zoneconf.c bind-9.10.3-xfer-limit-p0.0.1/bin/named/zoneconf.c
+--- bind-9.10.3/bin/named/zoneconf.c	2015-09-09 02:23:40.000000000 +0000
++++ bind-9.10.3-xfer-limit-p0.0.1/bin/named/zoneconf.c	2015-09-30 15:34:52.000000000 +0000
+@@ -1631,6 +1631,11 @@
+ 		dns_zone_setidlein(mayberaw, cfg_obj_asuint32(obj) * 60);
+ 
+ 		obj = NULL;
++		result = ns_config_get(maps, "max-transfer-size-in", &obj);
++		INSIST(result == ISC_R_SUCCESS && obj != NULL);
++		dns_zone_setmaxxfrinsize(mayberaw, cfg_obj_asuint32(obj));
++
++		obj = NULL;
+ 		result = ns_config_get(maps, "max-refresh-time", &obj);
+ 		INSIST(result == ISC_R_SUCCESS && obj != NULL);
+ 		dns_zone_setmaxrefreshtime(mayberaw, cfg_obj_asuint32(obj));
+diff -Naur bind-9.10.3/doc/misc/options bind-9.10.3-xfer-limit-p0.0.1/doc/misc/options
+--- bind-9.10.3/doc/misc/options	2015-09-09 02:23:40.000000000 +0000
++++ bind-9.10.3-xfer-limit-p0.0.1/doc/misc/options	2015-09-30 15:34:52.000000000 +0000
+@@ -182,6 +182,7 @@
+         max-transfer-idle-out <integer>;
+         max-transfer-time-in <integer>;
+         max-transfer-time-out <integer>;
++        max-transfer-size-in <integer>;
+         max-udp-size <integer>;
+         max-zone-ttl <maxttl_no_default>;
+         memstatistics <boolean>;
+@@ -444,6 +445,7 @@
+         max-transfer-idle-out <integer>;
+         max-transfer-time-in <integer>;
+         max-transfer-time-out <integer>;
++        max-transfer-size-in <integer>;
+         max-udp-size <integer>;
+         max-zone-ttl <maxttl_no_default>;
+         min-refresh-time <integer>;
+@@ -603,6 +605,7 @@
+                 max-transfer-idle-out <integer>;
+                 max-transfer-time-in <integer>;
+                 max-transfer-time-out <integer>;
++                max-transfer-size-in <integer>;
+                 max-zone-ttl <maxttl_no_default>;
+                 min-refresh-time <integer>;
+                 min-retry-time <integer>;
+@@ -702,6 +705,7 @@
+         max-transfer-idle-out <integer>;
+         max-transfer-time-in <integer>;
+         max-transfer-time-out <integer>;
++        max-transfer-size-in <integer>;
+         max-zone-ttl <maxttl_no_default>;
+         min-refresh-time <integer>;
+         min-retry-time <integer>;
+diff -Naur bind-9.10.3/lib/bind9/check.c bind-9.10.3-xfer-limit-p0.0.1/lib/bind9/check.c
+--- bind-9.10.3/lib/bind9/check.c	2015-09-09 02:23:40.000000000 +0000
++++ bind-9.10.3-xfer-limit-p0.0.1/lib/bind9/check.c	2015-09-30 15:34:52.000000000 +0000
+@@ -1516,6 +1516,7 @@
+ 	{ "max-transfer-idle-out", MASTERZONE | SLAVEZONE },
+ 	{ "max-transfer-time-in", SLAVEZONE | STUBZONE | STREDIRECTZONE },
+ 	{ "max-transfer-time-out", MASTERZONE | SLAVEZONE },
++	{ "max-transfer-size-in", SLAVEZONE | STUBZONE | STREDIRECTZONE },
+ 	{ "max-zone-ttl", MASTERZONE | REDIRECTZONE },
+ 	{ "min-refresh-time", SLAVEZONE | STUBZONE | STREDIRECTZONE },
+ 	{ "min-retry-time", SLAVEZONE | STUBZONE | STREDIRECTZONE },
+diff -Naur bind-9.10.3/lib/dns/include/dns/zone.h bind-9.10.3-xfer-limit-p0.0.1/lib/dns/include/dns/zone.h
+--- bind-9.10.3/lib/dns/include/dns/zone.h	2015-09-09 02:23:40.000000000 +0000
++++ bind-9.10.3-xfer-limit-p0.0.1/lib/dns/include/dns/zone.h	2015-09-30 15:34:52.000000000 +0000
+@@ -1257,6 +1257,27 @@
+  */
+ 
+ void
++dns_zone_setmaxxfrinsize(dns_zone_t *zone, isc_uint32_t maxxfrinsize);
++/*%<
++ * Set the maximum data size (bytes) that a zone transfer in (AXFR/IXFR)
++ * of this zone will use before being aborted.
++ *
++ * Requires:
++ * \li	'zone' to be valid initialised zone.
++ */
++
++isc_uint32_t
++dns_zone_getmaxxfrinsize(dns_zone_t *zone);
++/*%<
++ * Returns the maximum transfer data size (bytes) for this zone.  This will be
++ * either the value set by the last call to dns_zone_setmaxxfrinsize() or
++ * the default value of 0 bytes(unlimited).
++ *
++ * Requires:
++ *\li	'zone' to be valid initialised zone.
++ */
++
++void
+ dns_zone_setmaxxfrout(dns_zone_t *zone, isc_uint32_t maxxfrout);
+ /*%<
+  * Set the maximum time (in seconds) that a zone transfer out (AXFR/IXFR)
+diff -Naur bind-9.10.3/lib/dns/xfrin.c bind-9.10.3-xfer-limit-p0.0.1/lib/dns/xfrin.c
+--- bind-9.10.3/lib/dns/xfrin.c	2015-09-09 02:23:40.000000000 +0000
++++ bind-9.10.3-xfer-limit-p0.0.1/lib/dns/xfrin.c	2015-09-30 15:34:52.000000000 +0000
+@@ -1354,6 +1354,15 @@
+ 	 * Update the number of bytes received.
+ 	 */
+ 	xfr->nbytes += tcpmsg->buffer.used;
++	if ( dns_zone_getmaxxfrinsize(xfr->zone) != 0 &&
++             xfr->nbytes > dns_zone_getmaxxfrinsize(xfr->zone) ) {
++            result = DNS_R_BADZONE;
++	    xfrin_log(xfr, ISC_LOG_ERROR, 
++		      "transfered size is exceeded; transferd: %d, limit: %d.",
++		      xfr->nbytes,
++		      dns_zone_getmaxxfrinsize(xfr->zone) );
++            goto failure;
++	}
+ 
+ 	/*
+ 	 * Take the context back.
+diff -Naur bind-9.10.3/lib/dns/zone.c bind-9.10.3-xfer-limit-p0.0.1/lib/dns/zone.c
+--- bind-9.10.3/lib/dns/zone.c	2015-09-09 02:23:40.000000000 +0000
++++ bind-9.10.3-xfer-limit-p0.0.1/lib/dns/zone.c	2015-09-30 15:34:52.000000000 +0000
+@@ -301,6 +301,7 @@
+ 	dns_io_t		*writeio;
+ 	isc_uint32_t		maxxfrin;
+ 	isc_uint32_t		maxxfrout;
++	isc_uint32_t		maxxfrinsize;
+ 	isc_uint32_t		idlein;
+ 	isc_uint32_t		idleout;
+ 	isc_event_t		ctlevent;
+@@ -993,6 +994,7 @@
+ 	zone->tsigkey = NULL;
+ 	zone->maxxfrin = MAX_XFER_TIME;
+ 	zone->maxxfrout = MAX_XFER_TIME;
++        zone->maxxfrinsize = 0;
+ 	zone->ssutable = NULL;
+ 	zone->sigvalidityinterval = 30 * 24 * 3600;
+ 	zone->sigresigninginterval = 7 * 24 * 3600;
+@@ -13131,6 +13133,21 @@
+ }
+ 
+ void
++dns_zone_setmaxxfrinsize(dns_zone_t *zone, isc_uint32_t maxxfrinsize) {
++	REQUIRE(DNS_ZONE_VALID(zone));
++
++	zone->maxxfrinsize = maxxfrinsize;
++}
++
++isc_uint32_t
++dns_zone_getmaxxfrinsize(dns_zone_t *zone) {
++	REQUIRE(DNS_ZONE_VALID(zone));
++
++	return (zone->maxxfrinsize);
++}
++
++
++void
+ dns_zone_setmaxxfrout(dns_zone_t *zone, isc_uint32_t maxxfrout) {
+ 	REQUIRE(DNS_ZONE_VALID(zone));
+ 	zone->maxxfrout = maxxfrout;
+diff -Naur bind-9.10.3/lib/isccfg/namedconf.c bind-9.10.3-xfer-limit-p0.0.1/lib/isccfg/namedconf.c
+--- bind-9.10.3/lib/isccfg/namedconf.c	2015-09-09 02:23:40.000000000 +0000
++++ bind-9.10.3-xfer-limit-p0.0.1/lib/isccfg/namedconf.c	2015-09-30 15:34:52.000000000 +0000
+@@ -1685,6 +1685,7 @@
+ 	{ "max-transfer-idle-out", &cfg_type_uint32, 0 },
+ 	{ "max-transfer-time-in", &cfg_type_uint32, 0 },
+ 	{ "max-transfer-time-out", &cfg_type_uint32, 0 },
++	{ "max-transfer-size-in", &cfg_type_uint32, 0 },
+ 	{ "max-zone-ttl", &cfg_type_maxttl, 0 },
+ 	{ "min-refresh-time", &cfg_type_uint32, 0 },
+ 	{ "min-retry-time", &cfg_type_uint32, 0 },
