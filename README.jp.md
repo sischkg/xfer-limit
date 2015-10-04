@@ -50,3 +50,27 @@ nsd.confに`size-limit-xfr`を設定することで、
         request-xfr: 192.168.198.132 NOKEY
         size-limit-xfr: 2000000
 
+### knotDNS
+
+knot-1.6.5に対するパッチです。パッチは以下の手順で当てることができます。
+
+    $ wget https://raw.githubusercontent.com/sischkg/xfer-limit/master/knot-1.6.5-xfer-limit-0.0.1.patch
+    $ wget https://secure.nic.cz/files/knot-dns/knot-1.6.5.tar.xz
+    $ xz -cd knot-1.6.5.tar.gz | tar xf -
+    $ cd knot-1.6.5
+    $ patch -p1 < ../knot-1.6.5-xfer-limit-0.0.1.patch
+    $ ./configure <configure options>
+    $ make
+    $ su
+    # make install
+
+knot.confに`xfr-in-limit`を設定することで、
+ゾーン転送の受信データの上限値(bytes)を設定することができます。
+
+    example.com {
+      file "example.com.zone";
+      xfr-in master0;
+      xfr-in-limit 2000000;
+      notify-in master0;
+    }
+

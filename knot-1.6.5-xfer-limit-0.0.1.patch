@@ -1,0 +1,142 @@
+diff --git a/configure.ac b/configure.ac
+index 76b50f7..884723c 100644
+--- a/configure.ac
++++ b/configure.ac
+@@ -101,7 +101,7 @@ AS_IF([test "$enable_systemd" != "no"],[
+     [auto],[PKG_CHECK_MODULES([systemd], [libsystemd], [enable_systemd=yes], [
+             PKG_CHECK_MODULES([systemd], [libsystemd-daemon libsystemd-journal], [enable_systemd=yes], [enable_systemd=no])])],
+     [yes],[PKG_CHECK_MODULES([systemd], [libsystemd], [], [
+-    →       PKG_CHECK_MODULES([systemd], [libsystemd-daemon libsystemd-journal])])],
++            PKG_CHECK_MODULES([systemd], [libsystemd-daemon libsystemd-journal])])],
+     [*],[AC_MSG_ERROR([Invalid value of --enable-systemd.])])
+     ])
+ 
+diff --git a/doc/configuration.rst b/doc/configuration.rst
+index b2fe0da..3f05184 100644
+--- a/doc/configuration.rst
++++ b/doc/configuration.rst
+@@ -76,6 +76,7 @@ AXFR::
+         notify-in master;   # also allow NOTIFY from 'master'
+         update-in subnet1;  # accept UPDATE msgs from subnet1 and forward
+                             # to master
++        xfr-in-limit 20000; # limit of AXFR data size(bytes)
+       }
+     }
+ 
+diff --git a/src/knot/conf/cf-lex.l b/src/knot/conf/cf-lex.l
+index e1c11e8..467800c 100644
+--- a/src/knot/conf/cf-lex.l
++++ b/src/knot/conf/cf-lex.l
+@@ -112,6 +112,7 @@ notify-retries  { lval.t = yytext; return NOTIFY_RETRIES; }
+ notify-timeout  { lval.t = yytext; return NOTIFY_TIMEOUT; }
+ zonefile-sync   { lval.t = yytext; return DBSYNC_TIMEOUT; }
+ ixfr-fslimit    { lval.t = yytext; return IXFR_FSLIMIT; }
++xfr-in-limit    { lval.t = yytext; return XFR_IN_LIMIT; }
+ xfr-in          { lval.t = yytext; return XFR_IN; }
+ xfr-out         { lval.t = yytext; return XFR_OUT; }
+ update-in       { lval.t = yytext; return UPDATE_IN; }
+diff --git a/src/knot/conf/cf-parse.y b/src/knot/conf/cf-parse.y
+index 464fe5b..3cc4ade 100644
+--- a/src/knot/conf/cf-parse.y
++++ b/src/knot/conf/cf-parse.y
+@@ -511,6 +511,7 @@ static void ident_auto(void *scanner, int tok, conf_t *conf, bool val)
+ %token <tok> DBSYNC_TIMEOUT
+ %token <tok> IXFR_FSLIMIT
+ %token <tok> XFR_IN
++%token <tok> XFR_IN_LIMIT
+ %token <tok> XFR_OUT
+ %token <tok> UPDATE_IN
+ %token <tok> NOTIFY_IN
+@@ -945,6 +946,9 @@ zone:
+  | zone IXFR_FSLIMIT NUM ';' {
+ 	SET_SIZE(this_zone->ixfr_fslimit, $3.i, "ixfr-fslimit");
+  }
++ | zone XFR_IN_LIMIT NUM ';' {
++	SET_SIZE(this_zone->xfr_in_limit, $3.i, "xfr-in-limit");
++ }
+  | zone NOTIFY_RETRIES NUM ';' {
+ 	SET_NUM(this_zone->notify_retries, $3.i, 1, INT_MAX, "notify-retries");
+    }
+diff --git a/src/knot/conf/conf.c b/src/knot/conf/conf.c
+index dd31662..20b040b 100644
+--- a/src/knot/conf/conf.c
++++ b/src/knot/conf/conf.c
+@@ -1,3 +1,4 @@
++
+ /*  Copyright (C) 2011 CZ.NIC, z.s.p.o. <knot-dns@labs.nic.cz>
+ 
+     This program is free software: you can redistribute it and/or modify
+@@ -929,6 +930,7 @@ void conf_init_zone(conf_zone_t *zone)
+ 	zone->build_diffs = -1;
+ 	zone->sig_lifetime = -1;
+ 	zone->dnssec_enable = -1;
++        zone->xfr_in_limit = 0;
+ 
+ 	// Initialize ACL lists.
+ 	init_list(&zone->acl.xfr_in);
+diff --git a/src/knot/conf/conf.h b/src/knot/conf/conf.h
+index 8a07c91..3ab4937 100644
+--- a/src/knot/conf/conf.h
++++ b/src/knot/conf/conf.h
+@@ -120,6 +120,7 @@ typedef struct conf_zone_t {
+ 	char *ixfr_db;             /*!< Path to a IXFR database file. */
+ 	int dnssec_enable;         /*!< DNSSEC: Online signing enabled. */
+ 	size_t ixfr_fslimit;       /*!< File size limit for IXFR journal. */
++	size_t xfr_in_limit;       /*!< Data size limit of transfered data. */
+ 	int sig_lifetime;          /*!< Validity period of DNSSEC signatures. */
+ 	int dbsync_timeout;        /*!< Interval between syncing to zonefile.*/
+ 	int enable_checks;         /*!< Semantic checks for parser.*/
+diff --git a/src/knot/nameserver/axfr.c b/src/knot/nameserver/axfr.c
+index 1abaef7..5eea8d8 100644
+--- a/src/knot/nameserver/axfr.c
++++ b/src/knot/nameserver/axfr.c
+@@ -294,6 +294,7 @@ static int axfr_answer_init(struct answer_data *data)
+ 
+ 	memset(proc, 0, sizeof(struct xfr_proc));
+ 	proc->contents = new_contents;
++	proc->xfr_in_limit = zone->conf->xfr_in_limit;
+ 	gettimeofday(&proc->tstamp, NULL);
+ 
+ 	/* Set up cleanup callback. */
+@@ -352,6 +353,16 @@ static int axfr_answer_packet(knot_pkt_t *pkt, struct xfr_proc *proc)
+ 	proc->npkts  += 1;
+ 	proc->nbytes += pkt->size;
+ 
++        /* Check Transfered size. */
++        if ( proc->xfr_in_limit != 0 &&
++             proc->nbytes > proc->xfr_in_limit ) {
++                 log_zone_error( proc->contents->apex->owner,
++	                         "transfered data size is exceeded: size: %d, limit: %ld",
++                                 proc->nbytes,
++                                 proc->xfr_in_limit );                
++                 return NS_PROC_FAIL;
++        }
++
+ 	/* Init zone creator. */
+ 	zcreator_t zc = {.z = proc->contents, .master = false, .ret = KNOT_EOK };
+ 
+diff --git a/src/knot/nameserver/axfr.h b/src/knot/nameserver/axfr.h
+index b700ce7..644474a 100644
+--- a/src/knot/nameserver/axfr.h
++++ b/src/knot/nameserver/axfr.h
+@@ -39,6 +39,7 @@ struct xfr_proc {
+ 	unsigned nbytes; /* Bytes processed. */
+ 	struct timeval tstamp; /* Start time. */
+ 	zone_contents_t *contents; /* Processed zone. */
++        size_t xfr_in_limit; /* size limit of xfr data */
+ };
+ 
+ /*! \brief Generic transfer processing (reused for IXFR).
+diff --git a/src/knot/zone/contents.h b/src/knot/zone/contents.h
+index 6212543..f045d52 100644
+--- a/src/knot/zone/contents.h
++++ b/src/knot/zone/contents.h
+@@ -47,6 +47,8 @@ typedef struct zone_contents_t {
+ 	zone_tree_t *nsec3_nodes;
+ 
+ 	knot_nsec3_params_t nsec3_params;
++
++        size_t      xfer_in_limit;  /* size limit of zone tranfered data */
+ } zone_contents_t;
+ 
+ /*!
