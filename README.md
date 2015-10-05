@@ -1,6 +1,6 @@
 # Xfer-Limit Patches
 
-These patches provide the limitation of AXFR data size for "Bind" and "NSD".
+These patches provide the limitation of AXFR data size for "Bind", "NSD", "knotDNS".
 
 ## Usage
 
