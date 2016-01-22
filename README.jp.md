@@ -74,3 +74,39 @@ knot.confに`xfr-in-limit`を設定することで、
       notify-in master0;
     }
 
+
+### PowerDNS
+
+PowerDNS 3.4.7に対するパッチです。パッチは以下の手順で当てることができます。
+
+    $ wget https://raw.githubusercontent.com/sischkg/xfer-limit/master/powerdns-3.4.7-xfer-limit-0.0.1.patch
+    $ wget https://downloads.powerdns.com/releases/pdns-3.4.7.tar.bz2
+    $ tar xjf pdns-3.4.7.tar.bz2
+    $ cd pdns-3.4.7
+    $ patch -p1 < ../powerdns-3.4.7-xfer-limit-0.0.1.patch
+    $ ./configure <configure options>
+    $ make
+    $ su
+    # make install
+
+domainmetadataテーブルにXFR-SIZE-LIMITを追加することで
+ゾーン転送の受信データの上限値(bytes)を設定することができます。
+
+    mysql> select id from domains where name = 'example.com';
+    +----+
+    | id |
+    +----+
+    |  2 |
+    +----+
+    1 row in set (0.00 sec)
+    
+    mysql> insert into domainmetadata (domain_id, kind, content) values (2,'XFR-SIZE-LIMIT','10000000');
+
+    mysql> select * from domainmetadata;
+    +----+-----------+----------------+----------+
+    | id | domain_id | kind           | content  |
+    +----+-----------+----------------+----------+
+    |  2 |         2 | XFR-SIZE-LIMIT | 10000000 |
+    +----+-----------+----------------+----------+
+    1 row in set (0.00 sec)
+

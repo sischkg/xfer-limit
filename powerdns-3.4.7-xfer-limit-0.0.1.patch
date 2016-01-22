@@ -1,0 +1,91 @@
+diff --git a/pdns/resolver.cc b/pdns/resolver.cc
+index 501ee25..ea01de2 100644
+--- a/pdns/resolver.cc
++++ b/pdns/resolver.cc
+@@ -380,7 +380,7 @@ AXFRRetriever::AXFRRetriever(const ComboAddress& remote,
+         const string& tsigalgorithm, 
+         const string& tsigsecret,
+         const ComboAddress* laddr)
+-: d_tsigkeyname(tsigkeyname), d_tsigsecret(tsigsecret), d_tsigPos(0), d_nonSignedMessages(0)
++  : d_tsigkeyname(tsigkeyname), d_tsigsecret(tsigsecret), d_tsigPos(0), d_nonSignedMessages(0), d_transfered_size(0)
+ {
+   ComboAddress local;
+   if (laddr != NULL) {
+@@ -469,6 +469,8 @@ int AXFRRetriever::getChunk(Resolver::res_t &res) // Implementation is making su
+   if(err) 
+     throw ResolverException("AXFR chunk error: " + RCode::to_s(err));
+ 
++  d_transfered_size += len;
++
+   BOOST_FOREACH(const MOADNSParser::answers_t::value_type& answer, mdp.d_answers)
+     if (answer.first.d_type == QType::SOA)
+       d_soacount++;
+@@ -605,3 +607,8 @@ int AXFRRetriever::getLength()
+   return (unsigned char)d_buf[0]*256+(unsigned char)d_buf[1];
+ }
+ 
++uint32_t AXFRRetriever::getTransferedSize() const
++{
++  return d_transfered_size;
++}
++
+diff --git a/pdns/resolver.hh b/pdns/resolver.hh
+index 28fdb12..05e6ba0 100644
+--- a/pdns/resolver.hh
++++ b/pdns/resolver.hh
+@@ -87,8 +87,8 @@ class AXFRRetriever : public boost::noncopyable
+         const string& tsigsecret=string(),
+         const ComboAddress* laddr = NULL);
+ 	~AXFRRetriever();
+-    int getChunk(Resolver::res_t &res);  
+-  
++    int getChunk(Resolver::res_t &res);
++    uint32_t getTransferedSize() const;
+   private:
+     void connect();
+     int getLength();
+@@ -107,6 +107,9 @@ class AXFRRetriever : public boost::noncopyable
+     uint32_t d_tsigPos;
+     uint d_nonSignedMessages; // RFC2845 4.4
+     TSIGRecordContent d_trc;
++
++    uint32_t d_transfered_size;
++
+ };
+ 
+ // class that one day might be more than a function to help you get IP addresses for a nameserver
+diff --git a/pdns/slavecommunicator.cc b/pdns/slavecommunicator.cc
+index 542c41d..af5a446 100644
+--- a/pdns/slavecommunicator.cc
++++ b/pdns/slavecommunicator.cc
+@@ -121,6 +121,18 @@ void CommunicatorClass::suck(const string &domain,const string &remote)
+       laddr.sin4.sin_family = 0;
+     }
+ 
++    vector<string> axfr_size_limit_str;
++    uint32_t axfr_size_limit = 0;
++    if(B.getDomainMetadata(domain, "XFR-SIZE-LIMIT", axfr_size_limit_str ) && !axfr_size_limit_str.empty()) {
++      try {
++          axfr_size_limit = boost::lexical_cast<uint32_t>( axfr_size_limit_str[0] );
++        L<<Logger::Info<<"AXFR Size limit for '"<<domain<<"' set to "<< axfr_size_limit <<endl;
++      }
++      catch(std::exception& e) {
++        L<<Logger::Error<<"Failed to load AXFR Size limit '"<<axfr_size_limit_str[0]<<"' for incoming AXFR of '"<<domain<<"': "<<e.what()<<endl;
++        return;
++      }
++    }
+ 
+     bool hadDnssecZone = false;
+     bool hadPresigned = false;
+@@ -159,6 +171,11 @@ void CommunicatorClass::suck(const string &domain,const string &remote)
+         first=false;
+       }
+ 
++      if ( axfr_size_limit != 0 && retriever.getTransferedSize() > axfr_size_limit ) {
++        L<<Logger::Error<<"AXFR size is exceeded(limit: " << axfr_size_limit << ", domain: " <<domain<< ")" << endl;
++        throw PDNSException("AXFR size is exceeded for " + domain );
++      }
++
+       for(Resolver::res_t::iterator i=recs.begin();i!=recs.end();++i) {
+         if(i->qtype.getCode() == QType::OPT || i->qtype.getCode() == QType::TSIG) // ignore EDNS0 & TSIG
+           continue;

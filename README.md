@@ -71,3 +71,37 @@ Add `xfr-in-limit` to the zone options in knot.conf.
       notify-in master0;
     }
 
+### PowerDNS
+
+    $ wget https://raw.githubusercontent.com/sischkg/xfer-limit/master/powerdns-3.4.7-xfer-limit-0.0.1.patch
+    $ wget https://downloads.powerdns.com/releases/pdns-3.4.7.tar.bz2
+    $ tar xjf pdns-3.4.7.tar.bz2
+    $ cd pdns-3.4.7
+    $ patch -p1 < ../powerdns-3.4.7-xfer-limit-0.0.1.patch
+    $ ./configure <configure options>
+    $ make
+    $ su
+    # make install
+
+Add `XFR-SIZE-LIMIT` to `domainmetadata`. 
+`XFR-SIZE-LIMIT` specifies the upper size limit(bytes) of received AXFR data.
+
+    mysql> select id from domains where name = 'example.com';
+    +----+
+    | id |
+    +----+
+    |  2 |
+    +----+
+    1 row in set (0.00 sec)
+    
+    mysql> insert into domainmetadata (domain_id, kind, content) values (2,'XFR-SIZE-LIMIT','10000000');
+
+    mysql> select * from domainmetadata;
+    +----+-----------+----------------+----------+
+    | id | domain_id | kind           | content  |
+    +----+-----------+----------------+----------+
+    |  2 |         2 | XFR-SIZE-LIMIT | 10000000 |
+    +----+-----------+----------------+----------+
+    1 row in set (0.00 sec)
+
+
