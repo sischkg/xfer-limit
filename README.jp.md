@@ -1,6 +1,6 @@
 # Xfer-Limit Patches
 
-このパッチは、BindやNSD、knotDNSにゾーン転送(AXFR)で受信するデータサイズを制限する機能を追加します。
+このパッチは、BindやNSD、knotDNS、PowerDNSにゾーン転送(AXFR)で受信するデータサイズを制限する機能を追加します。
 
 ## 使用方法
 
