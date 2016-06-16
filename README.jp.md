@@ -57,7 +57,8 @@ nsd-4.1.5に対するパッチです。パッチは以下の手順で当てる�
 nsd.confに`size-limit-xfr`を設定することで、
 ゾーン転送の受信データを保存する一時ファイルの上限値(bytes)を設定することができます。
 
-    name: "example.com"
+    zone:
+        name: "example.com"
         zonefile: "example.com"
         request-xfr: 192.168.198.132 NOKEY
         size-limit-xfr: 2000000
