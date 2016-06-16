@@ -18,6 +18,18 @@ This patch for Bind-9.10.3.
     $ su
     # make install
 
+This patch for Bind-9.9.1-P1
+
+    $ wget https://raw.githubusercontent.com/sischkg/xfer-limit/master/bind-9.9.9-P1-xfer-limit-0.0.1.patch
+    $ wget http://ftp.isc.org/isc/bind9/9.9.1/bind-9.9.9-P1.tar.gz
+    $ tar xzf bind-9.9.9-P1.tar.gz
+    $ cd bind-9.9.9-P1
+    $ patch -p1 < ../bind-9.9.9-P1-xfer-limit-0.0.1.patch
+    $ ./configure <configure options>
+    $ make
+    $ su
+    # make install
+
 Add `max-transfer-size-in` to zone statement in named.conf.
 `max-transfer-size-in` specifies the upper size limit(bytes) of received AXFR data.
 

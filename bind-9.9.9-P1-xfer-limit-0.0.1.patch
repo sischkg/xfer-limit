@@ -1,0 +1,166 @@
+diff --git bin/named/config.c bin/named/config.c
+index 4798272..8254260 100644
+--- bin/named/config.c
++++ bin/named/config.c
+@@ -196,6 +196,7 @@ options {\n\
+ 	alt-transfer-source-v6 *;\n\
+ 	max-transfer-time-in 120;\n\
+ 	max-transfer-time-out 120;\n\
++	max-transfer-size-in 0;\n\
+ 	max-transfer-idle-in 60;\n\
+ 	max-transfer-idle-out 60;\n\
+ 	max-retry-time 1209600; /* 2 weeks */\n\
+diff --git bin/named/zoneconf.c bin/named/zoneconf.c
+index 5b473d1..b33eb00 100644
+--- bin/named/zoneconf.c
++++ bin/named/zoneconf.c
+@@ -1553,6 +1553,11 @@ ns_zone_configure(const cfg_obj_t *config, const cfg_obj_t *vconfig,
+ 		dns_zone_setidlein(mayberaw, cfg_obj_asuint32(obj) * 60);
+ 
+ 		obj = NULL;
++		result = ns_config_get(maps, "max-transfer-size-in", &obj);
++		INSIST(result == ISC_R_SUCCESS && obj != NULL);
++		dns_zone_setmaxxfrinsize(mayberaw, cfg_obj_asuint32(obj));
++
++		obj = NULL;
+ 		result = ns_config_get(maps, "max-refresh-time", &obj);
+ 		INSIST(result == ISC_R_SUCCESS && obj != NULL);
+ 		dns_zone_setmaxrefreshtime(mayberaw, cfg_obj_asuint32(obj));
+diff --git doc/misc/options doc/misc/options
+index f23568c..cd42d7f 100644
+--- doc/misc/options
++++ doc/misc/options
+@@ -175,6 +175,7 @@ options {
+         max-transfer-idle-out <integer>;
+         max-transfer-time-in <integer>;
+         max-transfer-time-out <integer>;
++        max-transfer-size-in <integer>;
+         max-udp-size <integer>;
+         memstatistics <boolean>;
+         memstatistics-file <quoted_string>;
+@@ -403,6 +404,7 @@ view <string> [ <class> ] {
+         max-transfer-idle-out <integer>;
+         max-transfer-time-in <integer>;
+         max-transfer-time-out <integer>;
++        max-transfer-size-in <integer>;
+         max-udp-size <integer>;
+         min-refresh-time <integer>;
+         min-retry-time <integer>;
+diff --git lib/bind9/check.c lib/bind9/check.c
+index cbfa830..85281c4 100644
+--- lib/bind9/check.c
++++ lib/bind9/check.c
+@@ -1339,6 +1339,7 @@ check_zoneconf(const cfg_obj_t *zconfig, const cfg_obj_t *voptions,
+ 	{ "max-transfer-idle-out", MASTERZONE | SLAVEZONE },
+ 	{ "max-transfer-time-in", SLAVEZONE | STUBZONE | STREDIRECTZONE },
+ 	{ "max-transfer-time-out", MASTERZONE | SLAVEZONE },
++        { "max-transfer-size-in", SLAVEZONE | STUBZONE | STREDIRECTZONE },
+ 	{ "min-refresh-time", SLAVEZONE | STUBZONE | STREDIRECTZONE },
+ 	{ "min-retry-time", SLAVEZONE | STUBZONE | STREDIRECTZONE },
+ 	{ "notify", MASTERZONE | SLAVEZONE },
+diff --git lib/dns/include/dns/zone.h lib/dns/include/dns/zone.h
+index 987d06f..57de4b8 100644
+--- lib/dns/include/dns/zone.h
++++ lib/dns/include/dns/zone.h
+@@ -1113,6 +1113,27 @@ dns_zone_getmaxxfrin(dns_zone_t *zone);
+  */
+ 
+ void
++dns_zone_setmaxxfrinsize(dns_zone_t *zone, isc_uint32_t maxxfrinsize);
++/*%<
++ * Set the maximum data size (bytes) that a zone transfer in (AXFR/IXFR)
++ * of this zone will use before being aborted.
++ *
++ * Requires:
++ * \li	'zone' to be valid initialised zone.
++ */
++
++isc_uint32_t
++dns_zone_getmaxxfrinsize(dns_zone_t *zone);
++/*%<
++ * Returns the maximum transfer data size (bytes) for this zone.  This will be
++ * either the value set by the last call to dns_zone_setmaxxfrinsize() or
++ * the default value of 0 bytes(unlimited).
++ *
++ * Requires:
++ *\li	'zone' to be valid initialised zone.
++ */
++
++void
+ dns_zone_setmaxxfrout(dns_zone_t *zone, isc_uint32_t maxxfrout);
+ /*%<
+  * Set the maximum time (in seconds) that a zone transfer out (AXFR/IXFR)
+diff --git lib/dns/xfrin.c lib/dns/xfrin.c
+index aec238d..9ef61e4 100644
+--- lib/dns/xfrin.c
++++ lib/dns/xfrin.c
+@@ -1346,6 +1346,15 @@ xfrin_recv_done(isc_task_t *task, isc_event_t *ev) {
+ 	 * Update the number of bytes received.
+ 	 */
+ 	xfr->nbytes += tcpmsg->buffer.used;
++	if ( dns_zone_getmaxxfrinsize(xfr->zone) != 0 &&
++             xfr->nbytes > dns_zone_getmaxxfrinsize(xfr->zone) ) {
++            result = DNS_R_BADZONE;
++	    xfrin_log(xfr, ISC_LOG_ERROR, 
++		      "transfered size is exceeded; transferd: %d, limit: %d.",
++		      xfr->nbytes,
++		      dns_zone_getmaxxfrinsize(xfr->zone) );
++            goto failure;
++	}
+ 
+ 	/*
+ 	 * Take the context back.
+diff --git lib/dns/zone.c lib/dns/zone.c
+index 490248a..0bbcb95 100644
+--- lib/dns/zone.c
++++ lib/dns/zone.c
+@@ -288,6 +288,7 @@ struct dns_zone {
+ 	dns_io_t		*writeio;
+ 	isc_uint32_t		maxxfrin;
+ 	isc_uint32_t		maxxfrout;
++	isc_uint32_t		maxxfrinsize;
+ 	isc_uint32_t		idlein;
+ 	isc_uint32_t		idleout;
+ 	isc_event_t		ctlevent;
+@@ -955,6 +956,7 @@ dns_zone_create(dns_zone_t **zonep, isc_mem_t *mctx) {
+ 	zone->tsigkey = NULL;
+ 	zone->maxxfrin = MAX_XFER_TIME;
+ 	zone->maxxfrout = MAX_XFER_TIME;
++        zone->maxxfrinsize = 0;
+ 	zone->ssutable = NULL;
+ 	zone->sigvalidityinterval = 30 * 24 * 3600;
+ 	zone->sigresigninginterval = 7 * 24 * 3600;
+@@ -12681,6 +12683,21 @@ dns_zone_getmaxxfrin(dns_zone_t *zone) {
+ }
+ 
+ void
++dns_zone_setmaxxfrinsize(dns_zone_t *zone, isc_uint32_t maxxfrinsize) {
++	REQUIRE(DNS_ZONE_VALID(zone));
++
++	zone->maxxfrinsize = maxxfrinsize;
++}
++
++isc_uint32_t
++dns_zone_getmaxxfrinsize(dns_zone_t *zone) {
++	REQUIRE(DNS_ZONE_VALID(zone));
++
++	return (zone->maxxfrinsize);
++}
++
++
++void
+ dns_zone_setmaxxfrout(dns_zone_t *zone, isc_uint32_t maxxfrout) {
+ 	REQUIRE(DNS_ZONE_VALID(zone));
+ 	zone->maxxfrout = maxxfrout;
+diff --git lib/isccfg/namedconf.c lib/isccfg/namedconf.c
+index d95a03a..39c208d 100644
+--- lib/isccfg/namedconf.c
++++ lib/isccfg/namedconf.c
+@@ -1603,6 +1603,7 @@ zone_clauses[] = {
+ 	{ "max-transfer-idle-out", &cfg_type_uint32, 0 },
+ 	{ "max-transfer-time-in", &cfg_type_uint32, 0 },
+ 	{ "max-transfer-time-out", &cfg_type_uint32, 0 },
++        { "max-transfer-size-in", &cfg_type_uint32, 0 },
+ 	{ "min-refresh-time", &cfg_type_uint32, 0 },
+ 	{ "min-retry-time", &cfg_type_uint32, 0 },
+ 	{ "multi-master", &cfg_type_boolean, 0 },

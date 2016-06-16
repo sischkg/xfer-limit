@@ -18,6 +18,18 @@ Bind-9.10.3に対するパッチです。パッチは以下の手順で当てる
     $ su
     # make install
 
+Bind-9.9.1-P1に対するパッチです。
+
+    $ wget https://raw.githubusercontent.com/sischkg/xfer-limit/master/bind-9.9.9-P1-xfer-limit-0.0.1.patch
+    $ wget ftp://ftp.isc.org/isc/bind9/9.9.9-P1/bind-9.9.9-P1.tar.gz
+    $ tar xzf bind-9.9.9-P1.tar.gz
+    $ cd bind-9.9.9-P1
+    $ patch -p1 < ../bind-9.9.9-P1-xfer-limit-0.0.1.patch
+    $ ./configure <configure options>
+    $ make
+    $ su
+    # make install
+
 named.confに`max-transfer-size-in`を設定することで、
 ゾーン転送の受信データの上限値(bytes)を設定することができます。
 
