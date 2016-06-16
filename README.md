@@ -21,7 +21,7 @@ This patch for Bind-9.10.3.
 This patch for Bind-9.9.1-P1
 
     $ wget https://raw.githubusercontent.com/sischkg/xfer-limit/master/bind-9.9.9-P1-xfer-limit-0.0.1.patch
-    $ wget http://ftp.isc.org/isc/bind9/9.9.1/bind-9.9.9-P1.tar.gz
+    $ wget ftp://ftp.isc.org/isc/bind9/9.9.9-P1/bind-9.9.9-P1.tar.gz
     $ tar xzf bind-9.9.9-P1.tar.gz
     $ cd bind-9.9.9-P1
     $ patch -p1 < ../bind-9.9.9-P1-xfer-limit-0.0.1.patch
@@ -56,7 +56,8 @@ Add `max-transfer-size-in` to zone statement in named.conf.
 Add `size-limit-xfr` to the zone attribute in nsd.conf.
 `size-limit-xfr` specifies the upper size limit(bytes) of AXFR temporary file.
 
-    name: "example.com"
+    zone:
+        name: "example.com"
         zonefile: "example.com"
         request-xfr: 192.168.198.132 NOKEY
         size-limit-xfr: 2000000
