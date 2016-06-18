@@ -43,11 +43,11 @@ Add `max-transfer-size-in` to zone statement in named.conf.
 
 ### NSD
 
-    $ wget https://raw.githubusercontent.com/sischkg/xfer-limit/master/nsd-4.1.5-xfer-limit-0.0.1.patch
-    $ wget http://www.nlnetlabs.nl/downloads/nsd/nsd-4.1.5.tar.gz
-    $ tar xzf nsd-4.1.5.tar.gz
-    $ cd nsd-4.1.5
-    $ patch -p1 < ../nsd-4.1.5-xfer-limit-0.0.1.patch
+    $ wget https://raw.githubusercontent.com/sischkg/xfer-limit/master/nsd-4.1.10-xfer-limit-0.0.2.patch
+    $ wget http://www.nlnetlabs.nl/downloads/nsd/nsd-4.1.10.tar.gz
+    $ tar xzf nsd-4.1.10.tar.gz
+    $ cd nsd-4.1.10
+    $ patch -p1 < ../nsd-4.1.10-xfer-limit-0.0.2.patch
     $ ./configure <configure options>
     $ make
     $ su

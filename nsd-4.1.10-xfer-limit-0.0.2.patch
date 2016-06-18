@@ -1,0 +1,301 @@
+diff -Naur nsd-4.1.5/buffer.h nsd-4.1.5-xfer-limit-p0.0.1/buffer.h
+--- nsd-4.1.5/buffer.h	2006-02-07 13:48:16.000000000 +0000
++++ nsd-4.1.5-xfer-limit-p0.0.1/buffer.h	2015-09-28 09:05:48.000000000 +0000
+@@ -315,6 +315,20 @@
+ }
+ 
+ static inline void
++buffer_write_u64_at(buffer_type *buffer, size_t at, uint64_t data)
++{
++	assert(buffer_available_at(buffer, at, sizeof(data)));
++	write_uint64(buffer->_data + at, data);
++}
++
++static inline void
++buffer_write_u64(buffer_type *buffer, uint64_t data)
++{
++	buffer_write_u64_at(buffer, buffer->_position, data);
++	buffer->_position += sizeof(data);
++}
++
++static inline void
+ buffer_read_at(buffer_type *buffer, size_t at, void *data, size_t count)
+ {
+ 	assert(buffer_available_at(buffer, at, count));
+@@ -373,6 +387,21 @@
+ 	return result;
+ }
+ 
++static inline uint32_t
++buffer_read_u64_at(buffer_type *buffer, size_t at)
++{
++	assert(buffer_available_at(buffer, at, sizeof(uint64_t)));
++	return read_uint64(buffer->_data + at);
++}
++
++static inline uint64_t
++buffer_read_u64(buffer_type *buffer)
++{
++	uint64_t result = buffer_read_u64_at(buffer, buffer->_position);
++	buffer->_position += sizeof(uint64_t);
++	return result;
++}
++
+ /*
+  * Print to the buffer, increasing the capacity if required using
+  * buffer_reserve(). The buffer's position is set to the terminating
+ 	YY_BREAK
+ 		return yy_is_jam ? 0 : yy_current_state;
+diff -Naur nsd-4.1.5/configlexer.lex nsd-4.1.5-xfer-limit-p0.0.1/configlexer.lex
+--- nsd-4.1.5/configlexer.lex	2015-08-14 14:30:46.000000000 +0000
++++ nsd-4.1.5-xfer-limit-p0.0.1/configlexer.lex	2015-09-28 09:05:48.000000000 +0000
+@@ -232,6 +232,7 @@
+ zonefile{COLON}		{ LEXOUT(("v(%s) ", yytext)); return VAR_ZONEFILE;}
+ zonestats{COLON}	{ LEXOUT(("v(%s) ", yytext)); return VAR_ZONESTATS;}
+ allow-notify{COLON}	{ LEXOUT(("v(%s) ", yytext)); return VAR_ALLOW_NOTIFY;}
++size-limit-xfr{COLON}	{ LEXOUT(("v(%s) ", yytext)); return VAR_SIZE_LIMIT_XFR;}
+ request-xfr{COLON}	{ LEXOUT(("v(%s) ", yytext)); return VAR_REQUEST_XFR;}
+ notify{COLON}		{ LEXOUT(("v(%s) ", yytext)); return VAR_NOTIFY;}
+ notify-retry{COLON}	{ LEXOUT(("v(%s) ", yytext)); return VAR_NOTIFY_RETRY;}
+diff -Naur nsd-4.1.5/configparser.y nsd-4.1.5-xfer-limit-p0.0.1/configparser.y
+--- nsd-4.1.5/configparser.y	2015-08-14 14:30:46.000000000 +0000
++++ nsd-4.1.5-xfer-limit-p0.0.1/configparser.y	2015-09-28 09:05:48.000000000 +0000
+@@ -53,7 +53,7 @@
+ %token VAR_IPV4_EDNS_SIZE VAR_IPV6_EDNS_SIZE VAR_DO_IP4 VAR_DO_IP6
+ %token VAR_ZONEFILE 
+ %token VAR_ZONE
+-%token VAR_ALLOW_NOTIFY VAR_REQUEST_XFR VAR_NOTIFY VAR_PROVIDE_XFR 
++%token VAR_ALLOW_NOTIFY VAR_REQUEST_XFR VAR_NOTIFY VAR_PROVIDE_XFR VAR_SIZE_LIMIT_XFR 
+ %token VAR_NOTIFY_RETRY VAR_OUTGOING_INTERFACE VAR_ALLOW_AXFR_FALLBACK
+ %token VAR_KEY
+ %token VAR_ALGORITHM VAR_SECRET
+@@ -566,7 +566,7 @@
+ zone_config_item: zone_zonefile | zone_allow_notify | zone_request_xfr |
+ 	zone_notify | zone_notify_retry | zone_provide_xfr | 
+ 	zone_outgoing_interface | zone_allow_axfr_fallback | include_pattern |
+-	zone_rrl_whitelist | zone_zonestats;
++	zone_rrl_whitelist | zone_zonestats | zone_size_limit_xfr ;
+ pattern_name: VAR_NAME STRING
+ 	{ 
+ 		OUTYY(("P(pattern_name:%s)\n", $2)); 
+@@ -682,6 +682,14 @@
+ 	{
+ 	}
+ 	;
++zone_size_limit_xfr: VAR_SIZE_LIMIT_XFR STRING
++	{ 
++		OUTYY(("P(size_limit_xfrt:%s)\n", $2)); 
++		if(atoll($2) < 0)
++			yyerror("number >= 0 expected");
++		else cfg_parser->current_pattern->size_limit_xfr = atoll($2);
++	}
++	;
+ zone_request_xfr_data: STRING STRING
+ 	{ 
+ 		acl_options_t* acl = parse_acl_info(cfg_parser->opt->region, $1, $2);
+diff -Naur nsd-4.1.5/nsd.conf.5.in nsd-4.1.5-xfer-limit-p0.0.1/nsd.conf.5.in
+--- nsd-4.1.5/nsd.conf.5.in	2015-09-21 09:21:02.000000000 +0000
++++ nsd-4.1.5-xfer-limit-p0.0.1/nsd.conf.5.in	2015-09-28 09:05:48.000000000 +0000
+@@ -547,6 +547,10 @@
+ This option should be accompanied by request\-xfr. It (dis)allows NSD (as secondary) 
+ to fallback to AXFR if the primary name server does not support IXFR. Default is yes.
+ .TP
++.B size\-limit\-xfr:\fR <number>
++This option should be accompanied by request\-xfr. It specifies XFR temporary file size limit.
++If this option is 0, unlmited. Default value is 0.
++.TP
+ .B notify:\fR <ip\-address> <key\-name | NOKEY>
+ Access control list. The listed address (a secondary) is notified 
+ of updates to this zone. A port number can be added using a suffix of @number,
+diff -Naur nsd-4.1.5/options.c nsd-4.1.5-xfer-limit-p0.0.1/options.c
+--- nsd-4.1.5/options.c	2015-08-14 14:30:46.000000000 +0000
++++ nsd-4.1.5-xfer-limit-p0.0.1/options.c	2015-09-28 09:05:48.000000000 +0000
+@@ -787,6 +787,7 @@
+ 	p->zonestats = 0;
+ 	p->allow_notify = 0;
+ 	p->request_xfr = 0;
++	p->size_limit_xfr = 0;
+ 	p->notify = 0;
+ 	p->provide_xfr = 0;
+ 	p->outgoing_interface = 0;
+@@ -994,6 +995,7 @@
+ #ifdef RATELIMIT
+ 	if(p->rrl_whitelist != q->rrl_whitelist) return 0;
+ #endif
++	if(p->size_limit_xfr != q->size_limit_xfr) return 0;
+ 	return 1;
+ }
+ 
+@@ -1010,6 +1012,19 @@
+ 	return buffer_read_u8(b);
+ }
+ 
++static void
++marshal_u64(struct buffer* b, uint64_t v)
++{
++	buffer_reserve(b, 8);
++	buffer_write_u64(b, v);
++}
++
++static uint64_t
++unmarshal_u64(struct buffer* b)
++{
++	return buffer_read_u64(b);
++}
++
+ #ifdef RATELIMIT
+ static void
+ marshal_u16(struct buffer* b, uint16_t v)
+@@ -1112,6 +1127,7 @@
+ 	marshal_u8(b, p->notify_retry);
+ 	marshal_u8(b, p->notify_retry_is_default);
+ 	marshal_u8(b, p->implicit);
++	marshal_u64(b, p->size_limit_xfr);
+ 	marshal_acl_list(b, p->allow_notify);
+ 	marshal_acl_list(b, p->request_xfr);
+ 	marshal_acl_list(b, p->notify);
+@@ -1134,6 +1150,7 @@
+ 	p->notify_retry = unmarshal_u8(b);
+ 	p->notify_retry_is_default = unmarshal_u8(b);
+ 	p->implicit = unmarshal_u8(b);
++	p->size_limit_xfr = unmarshal_u64(b);
+ 	p->allow_notify = unmarshal_acl_list(r, b);
+ 	p->request_xfr = unmarshal_acl_list(r, b);
+ 	p->notify = unmarshal_acl_list(r, b);
+@@ -1849,6 +1866,7 @@
+ 		a->notify_retry = pat->notify_retry;
+ 		a->notify_retry_is_default = 0;
+ 	}
++	a->size_limit_xfr = pat->size_limit_xfr;
+ #ifdef RATELIMIT
+ 	a->rrl_whitelist |= pat->rrl_whitelist;
+ #endif
+diff -Naur nsd-4.1.5/options.h nsd-4.1.5-xfer-limit-p0.0.1/options.h
+--- nsd-4.1.5/options.h	2015-08-14 14:30:46.000000000 +0000
++++ nsd-4.1.5-xfer-limit-p0.0.1/options.h	2015-09-28 09:05:48.000000000 +0000
+@@ -150,6 +150,8 @@
+ 	uint8_t notify_retry_is_default;
+ 	uint8_t implicit; /* pattern is implicit, part_of_config zone used */
+ 	uint8_t xfrd_flags;
++
++        uint64_t size_limit_xfr;
+ };
+ 
+ #define PATTERN_IMPLICIT_MARKER "_implicit_"
+diff -Naur nsd-4.1.5/util.h nsd-4.1.5-xfer-limit-p0.0.1/util.h
+--- nsd-4.1.5/util.h	2015-03-17 15:02:27.000000000 +0000
++++ nsd-4.1.5-xfer-limit-p0.0.1/util.h	2015-09-28 09:05:48.000000000 +0000
+@@ -198,6 +198,20 @@
+ #endif
+ }
+ 
++static inline void
++write_uint64(void *dst, uint64_t data)
++{
++	uint8_t *p = (uint8_t *) dst;
++	p[0] = (uint8_t) ((data >> 56) & 0xff);
++	p[1] = (uint8_t) ((data >> 48) & 0xff);
++	p[2] = (uint8_t) ((data >> 40) & 0xff);
++	p[3] = (uint8_t) ((data >> 32) & 0xff);
++	p[4] = (uint8_t) ((data >> 24) & 0xff);
++	p[5] = (uint8_t) ((data >> 16) & 0xff);
++	p[6] = (uint8_t) ((data >> 8) & 0xff);
++	p[7] = (uint8_t) (data & 0xff);
++}
++
+ /*
+  * Copy data allowing for unaligned accesses in network byte order
+  * (big endian).
+@@ -224,6 +238,21 @@
+ #endif
+ }
+ 
++static inline uint64_t
++read_uint64(const void *src)
++{
++	uint8_t *p = (uint8_t *) src;
++	return
++	    ((uint64_t)p[0] << 56) |
++	    ((uint64_t)p[1] << 48) |
++	    ((uint64_t)p[2] << 40) |
++	    ((uint64_t)p[3] << 32) |
++	    ((uint64_t)p[4] << 24) |
++	    ((uint64_t)p[5] << 16) |
++	    ((uint64_t)p[6] <<  8) |
++	    (uint64_t)p[7];
++}
++
+ /*
+  * Print debugging information using log_msg,
+  * set the logfile as /dev/stdout or /dev/stderr if you like.
+diff -Naur nsd-4.1.5/xfrd-disk.c nsd-4.1.5-xfer-limit-p0.0.1/xfrd-disk.c
+--- nsd-4.1.5/xfrd-disk.c	2014-10-13 09:17:51.000000000 +0000
++++ nsd-4.1.5-xfer-limit-p0.0.1/xfrd-disk.c	2015-09-28 09:05:48.000000000 +0000
+@@ -564,3 +564,19 @@
+ 			strerror(errno));
+ 	}
+ }
++
++off_t
++xfrd_get_xfrfile_size(struct nsd* nsd, uint64_t number )
++{
++	char fname[1024];
++	FILE* xfr;
++	tempxfrname(fname, sizeof(fname), nsd, number);
++	struct stat tempxfr_stat;
++	if( stat( fname, &tempxfr_stat ) < 0 ) {
++	    log_msg(LOG_WARNING, "could not get file size %s: %s", fname,
++		    strerror(errno));
++	    return 0;
++	}
++	return tempxfr_stat.st_size;
++}
++
+diff -Naur nsd-4.1.5/xfrd-disk.h nsd-4.1.5-xfer-limit-p0.0.1/xfrd-disk.h
+--- nsd-4.1.5/xfrd-disk.h	2012-06-29 15:10:47.000000000 +0000
++++ nsd-4.1.5-xfer-limit-p0.0.1/xfrd-disk.h	2015-09-28 09:05:48.000000000 +0000
+@@ -29,5 +29,8 @@
+ FILE* xfrd_open_xfrfile(struct nsd* nsd, uint64_t number, char* mode);
+ /* unlink temp file */
+ void xfrd_unlink_xfrfile(struct nsd* nsd, uint64_t number);
++/* get temp file size */
++off_t
++xfrd_get_xfrfile_size(struct nsd* nsd, uint64_t number );
+ 
+ #endif /* XFRD_DISK_H */
+diff -Naur nsd-4.1.5/xfrd.c nsd-4.1.5-xfer-limit-p0.0.1/xfrd.c
+--- nsd-4.1.5/xfrd.c	2014-10-14 15:10:35.000000000 +0000
++++ nsd-4.1.5-xfer-limit-p0.0.1/xfrd.c	2015-09-28 09:05:48.000000000 +0000
+@@ -1955,13 +1955,15 @@
+ 		}
+ 	}
+ 
++
++
+ 	/* dump reply on disk to diff file */
+ 	/* if first part, get new filenumber.  Numbers can wrap around, 64bit
+ 	 * is enough so we do not collide with older-transfers-in-progress */
+ 	if(zone->msg_seq_nr == 0)
+ 		zone->xfrfilenumber = xfrd->xfrfilenumber++;
+ 	diff_write_packet(dname_to_string(zone->apex,0),
+-		zone->zone_options->pattern->pname,
++		zone->zone_options->pattern->pname ,
+ 		zone->msg_old_serial, zone->msg_new_serial, zone->msg_seq_nr,
+ 		buffer_begin(packet), buffer_limit(packet), xfrd->nsd,
+ 		zone->xfrfilenumber);
+@@ -1970,6 +1972,15 @@
+ 		"disk", zone->apex_str, zone->master->ip_address_spec,
+ 		(int)zone->msg_new_serial));
+ 	zone->msg_seq_nr++;
++
++        off_t xfrfile_size = xfrd_get_xfrfile_size(xfrd->nsd, zone->xfrfilenumber);
++	if( zone->zone_options->pattern->size_limit_xfr != 0 &&
++	    xfrfile_size > zone->zone_options->pattern->size_limit_xfr ) {
++            /*	    xfrd_unlink_xfrfile(xfrd->nsd, zone->xfrfilenumber);
++                    xfrd_set_reload_timeout(); */
++            log_msg(LOG_INFO, "xfrd : too large transfered data %llu", xfrfile_size);
++	    return xfrd_packet_bad;
++	}
+ 	if(res == xfrd_packet_more) {
+ 		/* wait for more */
+ 		return xfrd_packet_more;
