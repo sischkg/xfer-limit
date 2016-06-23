@@ -1,12 +1,12 @@
 # Xfer-Limit Patches
 
-These patches provide the limitation of AXFR data size for "Bind", "NSD", "knotDNS", PowerDNS.
+These patches provide the limitation of AXFR data size for "BIND", "NSD", "knotDNS", "PowerDNS".
 
 ## Usage
 
-### Bind
+### BIND
 
-This patch for Bind-9.10.3.
+This patch for BIND 9.10.3.
 
     $ wget https://raw.githubusercontent.com/sischkg/xfer-limit/master/bind-9.10.3-xfer-limit-0.0.1.patch
     $ wget http://ftp.isc.org/isc/bind9/9.10.3/bind-9.10.3.tar.gz
@@ -18,7 +18,7 @@ This patch for Bind-9.10.3.
     $ su
     # make install
 
-This patch for Bind-9.9.1-P1
+This patch for BIND 9.9.1-P1
 
     $ wget https://raw.githubusercontent.com/sischkg/xfer-limit/master/bind-9.9.9-P1-xfer-limit-0.0.1.patch
     $ wget ftp://ftp.isc.org/isc/bind9/9.9.9-P1/bind-9.9.9-P1.tar.gz
@@ -43,6 +43,8 @@ Add `max-transfer-size-in` to zone statement in named.conf.
 
 ### NSD
 
+This patch for NSD 4.1.10.
+
     $ wget https://raw.githubusercontent.com/sischkg/xfer-limit/master/nsd-4.1.10-xfer-limit-0.0.2.patch
     $ wget http://www.nlnetlabs.nl/downloads/nsd/nsd-4.1.10.tar.gz
     $ tar xzf nsd-4.1.10.tar.gz
@@ -62,7 +64,9 @@ Add `size-limit-xfr` to the zone attribute in nsd.conf.
         request-xfr: 192.168.198.132 NOKEY
         size-limit-xfr: 2000000
 
-### knotDNS
+### knot DNS
+
+This patch for knot DNS 1.6.5
 
     $ wget https://raw.githubusercontent.com/sischkg/xfer-limit/master/knot-1.6.5-xfer-limit-0.0.1.patch
     $ wget https://secure.nic.cz/files/knot-dns/knot-1.6.5.tar.xz
@@ -85,6 +89,8 @@ Add `xfr-in-limit` to the zone options in knot.conf.
     }
 
 ### PowerDNS
+
+This patch for PowerDNS 3.4.7.
 
     $ wget https://raw.githubusercontent.com/sischkg/xfer-limit/master/powerdns-3.4.7-xfer-limit-0.0.1.patch
     $ wget https://downloads.powerdns.com/releases/pdns-3.4.7.tar.bz2
