@@ -48,7 +48,7 @@ NSD 4.1.10に対するパッチです。パッチは以下の手順で当てる�
     $ wget http://www.nlnetlabs.nl/downloads/nsd/nsd-4.1.10.tar.gz
     $ tar xzf nsd-4.1.10.tar.gz
     $ cd nsd-4.1.10
-    $ patch -p1 < ../nsd-4.1.10-xfer-limit-0.0.2.patch
+    $ patch -p1 < ../nsd-4.1.10-xfer-limit-0.0.3.patch
     $ ./configure <configure options>
     $ make
     $ su
