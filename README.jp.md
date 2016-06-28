@@ -67,11 +67,11 @@ nsd.confに`size-limit-xfr`を設定することで、
 
 knot DNS 1.6.5に対するパッチです。パッチは以下の手順で当てることができます。
 
-    $ wget https://raw.githubusercontent.com/sischkg/xfer-limit/master/knot-1.6.5-xfer-limit-0.0.1.patch
+    $ wget https://raw.githubusercontent.com/sischkg/xfer-limit/master/knot-1.6.5-xfer-limit-0.0.2.patch
     $ wget https://secure.nic.cz/files/knot-dns/knot-1.6.5.tar.xz
-    $ xz -cd knot-1.6.5.tar.gz | tar xf -
+    $ xz -cd knot-1.6.5.tar.xz | tar xf -
     $ cd knot-1.6.5
-    $ patch -p1 < ../knot-1.6.5-xfer-limit-0.0.1.patch
+    $ patch -p1 < ../knot-1.6.5-xfer-limit-0.0.2.patch
     $ ./configure <configure options>
     $ make
     $ su

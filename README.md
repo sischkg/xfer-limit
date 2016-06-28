@@ -68,11 +68,11 @@ Add `size-limit-xfr` to the zone attribute in nsd.conf.
 
 This patch for knot DNS 1.6.5
 
-    $ wget https://raw.githubusercontent.com/sischkg/xfer-limit/master/knot-1.6.5-xfer-limit-0.0.1.patch
+    $ wget https://raw.githubusercontent.com/sischkg/xfer-limit/master/knot-1.6.5-xfer-limit-0.0.2.patch
     $ wget https://secure.nic.cz/files/knot-dns/knot-1.6.5.tar.xz
-    $ xz -cd knot-1.6.5.tar.gz | tar xf -
+    $ xz -cd knot-1.6.5.tar.xz | tar xf -
     $ cd knot-1.6.5
-    $ patch -p1 < ../knot-1.6.5-xfer-limit-0.0.1.patch
+    $ patch -p1 < ../knot-1.6.5-xfer-limit-0.0.2.patch
     $ ./configure <configure options>
     $ make
     $ su
